@@ -12,6 +12,10 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
+from flow_state.io.flow_config import FlowConfig
+
 # --------------------------------------------------
 # read config file
 #
@@ -24,6 +28,9 @@ def read_config(path: Path) -> dict[str, Any]:
     """
     Read a TOML config file and return kwargs for solve().
 
+    The file is validated against FlowConfig: unknown keys, wrong types,
+    unknown units and out-of-range values raise a ValueError naming the key.
+
     Args:
         path: path to the TOML config file
 
@@ -33,43 +40,34 @@ def read_config(path: Path) -> dict[str, Any]:
     Raises:
         FileNotFoundError: if config file does not exist
         tomllib.TOMLDecodeError: if config file is invalid TOML
+        ValueError: if the config doesn't validate
     """
     with open(path, "rb") as f:
         cfg = tomllib.load(f)
 
-    # convert [value, unit] lists to tuples (TOML arrays -> Python lists)
-    def to_tuple(val: Any) -> Any:
-        if isinstance(val, list) and len(val) == 2:
-            return (val[0], val[1])
-        return val
+    # validate the config (pydantic's ValidationError reworded as one line per key)
+    try:
+        flow_config = FlowConfig.model_validate(cfg)
+    except ValidationError as error:
+        raise ValueError(_format_validation_error(error)) from None
 
     # build kwargs for solve()
-    kwargs: dict[str, Any] = {}
-
-    # map config keys to solve() parameters
-    param_keys = [
-        "mach", "pres", "temp", "uvel",
-        "pres_stag", "temp_stag",
-        "altitude", "re1", "lref", "pr", "gas", "notes"
-    ]
-
-    for key in param_keys:
-        if key in cfg:
-            kwargs[key] = to_tuple(cfg[key])
-
-    # handle atmosphere model
-    # supports: atm = "cira86" or [atmosphere] table with model/latitude/month
-    if "atm" in cfg:
-        kwargs["atm"] = cfg["atm"]
-    elif "atmosphere" in cfg:
-        atm_cfg = cfg["atmosphere"]
-        model = atm_cfg.get("model", "ussa76")
-        if model.lower() == "cira86":
-            from flow_state.atmosphere import CIRA86
-            latitude = atm_cfg.get("latitude", 45.0)
-            month = atm_cfg.get("month", 1)
-            kwargs["atm"] = CIRA86(latitude=latitude, month=month)
-        else:
-            kwargs["atm"] = model
+    kwargs = flow_config.solve_kwargs()
 
     return kwargs
+
+
+# --------------------------------------------------
+# helper: readable validation errors
+# --------------------------------------------------
+def _format_validation_error(error: ValidationError) -> str:
+    """One ``key: message`` line per problem, without pydantic's URLs."""
+
+    # collect a line per error, located by its (dotted) key
+    lines = ["invalid config:"]
+    for item in error.errors():
+        location = ".".join(str(part) for part in item["loc"])
+        message = item["msg"].removeprefix("Value error, ")
+        lines.append(f"  {location}: {message}")
+
+    return "\n".join(lines)

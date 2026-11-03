@@ -1,5 +1,8 @@
 """Generate a starter flow-state configuration."""
 
+# --------------------------------------------------
+# load necessary modules
+# --------------------------------------------------
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,6 +14,9 @@ from flow_state.cli.constants import DEFAULT_CONFIG
 from flow_state.cli.templates import CONFIG_TEMPLATE
 
 
+# --------------------------------------------------
+# subcommand: init
+# --------------------------------------------------
 def cmd_init(
     output: Annotated[
         Path,
@@ -23,10 +29,12 @@ def cmd_init(
 ) -> None:
     """Generate a documented template configuration file."""
 
+    # check: don't overwrite an existing configuration unless asked to
     if output.exists() and not force:
         typer.echo(f"Error: {output} already exists. Use --force to overwrite", err=True)
         raise typer.Exit(1)
 
+    # write the template and tell the user the next step
     output.write_text(CONFIG_TEMPLATE)
     typer.echo(f"Created {output}")
-    typer.echo("Edit the file, then run: flow-state solve")
+    typer.echo("Edit the file, then run: flow-state run")

@@ -1,5 +1,8 @@
 """Compute and write a flow state from CLI or TOML inputs."""
 
+# --------------------------------------------------
+# load necessary modules
+# --------------------------------------------------
 from __future__ import annotations
 
 import logging
@@ -12,10 +15,16 @@ from flow_state.cli.constants import DEFAULT_CONFIG, DEFAULT_OUTPUT
 from flow_state.io import read_config, write_flow_conditions_dat, write_json
 from flow_state.solvers import solve
 
+# --------------------------------------------------
+# set up logger
+# --------------------------------------------------
 logger = logging.getLogger(__name__)
 
 
-def cmd_solve(
+# --------------------------------------------------
+# subcommand: run
+# --------------------------------------------------
+def cmd_run(
     mach: Annotated[float | None, typer.Option("--mach", "-m", help="Mach number")] = None,
     pres_stag: Annotated[
         float | None,
@@ -93,8 +102,10 @@ def cmd_solve(
 ) -> None:
     """Compute a flow state from direct options or a configuration file."""
 
+    # check: direct options on the command line take precedence over a config file
     has_direct_options = any([mach, pres_stag, temp_stag, altitude, pres, temp, re1])
 
+    # build the solver inputs from the direct options given (units as (value, unit) tuples)
     if has_direct_options:
         solve_kwargs: dict[str, object] = {}
         if mach is not None:
@@ -118,7 +129,10 @@ def cmd_solve(
         if lref is not None:
             solve_kwargs["lref"] = lref
     else:
+        # read the solver inputs from the config file (default: flow_config.toml)
         config_path = config if config else Path(DEFAULT_CONFIG)
+
+        # check: the config exists, otherwise point to `flow-state init`
         if not config_path.exists():
             typer.echo(f"Error: {config_path} not found.", err=True)
             typer.echo(
@@ -127,32 +141,38 @@ def cmd_solve(
             )
             raise typer.Exit(1)
 
+        # read and parse the config
         try:
             solve_kwargs = read_config(config_path)
-        except Exception as error:
+        except (OSError, ValueError) as error:
             typer.echo(f"Error parsing {config_path}: {error}", err=True)
             raise typer.Exit(1) from error
 
+    # compute the flow state
     try:
         state = solve(**solve_kwargs)
     except (ValueError, TypeError) as error:
         typer.echo(f"Error computing flow state: {error}", err=True)
         raise typer.Exit(1) from error
 
+    # debug output for devs
     if state.provenance:
         for key, value in state.provenance.items():
             logger.debug("%s: %s", key, value)
     logger.debug("gas_model:       %s", state.gas_model)
     logger.debug("transport_model: %s", state.transport_model)
 
+    # write the flow-state JSON
     write_json(state, output)
     typer.echo(f"Wrote {output}")
 
+    # write the legacy flow_conditions.dat when asked for
     if dat:
         dat_path = Path("flow_conditions.dat")
         write_flow_conditions_dat(state, dat_path)
         typer.echo(f"Wrote {dat_path}")
 
+    # print the summary unless --quiet
     if not quiet:
         typer.echo("")
         typer.echo(str(state))

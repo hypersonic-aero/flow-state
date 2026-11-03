@@ -1,7 +1,7 @@
 # --------------------------------------------------
 # Sandia Hypersonic Wind Tunnel
 #
-# Run: flow-state solve --config flow_config.toml
+# Run: flow-state run --config flow_config.toml
 # --------------------------------------------------
 
 # --------------------------------------------------

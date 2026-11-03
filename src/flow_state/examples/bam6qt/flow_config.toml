@@ -1,21 +1,23 @@
 # --------------------------------------------------
-# STORT (Short Range Transition)
+# BAM6QT — Boeing/AFOSR Mach 6 Quiet Tunnel (Purdue University)
 #
-# Run: flow-state solve --config flow_config.toml
+# Run: flow-state run --config flow_config.toml
 # --------------------------------------------------
 
 # --------------------------------------------------
 # given values
 # --------------------------------------------------
 
-# mach number [-]
-mach = 7.1
-# flight altitude [km]
-altitude = [33.2, "km"]
+# mach number [0]
+mach = 6.0
+# stagnation temperature [K]
+temp_stag = 420.0
+# unit reynolds number [1/m]
+re1 = 10.0e6
 # reference length scale [m]
 lref = 1.0
 
 # --------------------------------------------------
 # label (optional)
 # --------------------------------------------------
-notes = "stort flight conditions"
+notes = "bam6qt nominal mach 6 run conditions"

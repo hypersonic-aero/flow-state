@@ -1,7 +1,7 @@
 # --------------------------------------------------
-# AEDC Tunnel 9 (Arnold Engineering Development Complex)
+# STORT (Short Range Transition)
 #
-# Run: flow-state solve --config flow_config.toml
+# Run: flow-state run --config flow_config.toml
 # --------------------------------------------------
 
 # --------------------------------------------------
@@ -9,20 +9,13 @@
 # --------------------------------------------------
 
 # mach number [-]
-mach = 9.86
-# freestream static temperature [K]
-temp = 53.4
-# unit reynolds number [1/m]
-re1 = 15.03e6
+mach = 7.1
+# flight altitude [km]
+altitude = [33.2, "km"]
 # reference length scale [m]
 lref = 1.0
 
 # --------------------------------------------------
-# gas model
-# --------------------------------------------------
-gas = "n2"
-
-# --------------------------------------------------
 # label (optional)
 # --------------------------------------------------
-notes = "aedc tunnel 9 nominal mach 10 run conditions"
+notes = "stort flight conditions"

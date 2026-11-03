@@ -9,6 +9,7 @@ import pytest
 from typer.testing import CliRunner
 
 from flow_state.cli import app, cli
+from flow_state.io.examples import list_examples
 
 runner = CliRunner()
 
@@ -19,15 +20,14 @@ def test_cli_alias_preserves_console_entry_point() -> None:
     assert cli is app
 
 
-def test_help_lists_commands_and_panels() -> None:
+def test_help_lists_commands() -> None:
     """Top-level help presents the public command surface."""
 
     result = runner.invoke(app, ["--help"])
 
     assert result.exit_code == 0
-    assert "Calculators" in result.output
-    assert "Workflow" in result.output
-    assert "solve" in result.output
+    assert "Commands" in result.output
+    assert "run" in result.output
     assert "init" in result.output
     assert "recover" in result.output
 
@@ -64,25 +64,39 @@ def test_init_refuses_to_overwrite_existing_file(tmp_path) -> None:
     assert output_path.read_text() == "existing"
 
 
-def test_solve_reports_missing_config(tmp_path, monkeypatch) -> None:
+def test_run_reports_missing_config(tmp_path, monkeypatch) -> None:
     """The default workflow explains how to recover from a missing config."""
 
     monkeypatch.chdir(tmp_path)
-    result = runner.invoke(app, ["solve"])
+    result = runner.invoke(app, ["run"])
 
     assert result.exit_code == 1
     assert "flow_config.toml not found" in result.output
     assert "flow-state init" in result.output
 
 
-def test_solve_direct_options_writes_json(tmp_path) -> None:
+def test_run_rejects_a_misspelled_config_key(tmp_path, monkeypatch) -> None:
+    """A typo in the config fails and names the key, instead of being ignored."""
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "flow_config.toml").write_text(
+        'mach = 6.0\npres_stag = [140, "psi"]\ntemp_stag = 420\nlrefs = 0.5\n'
+    )
+    result = runner.invoke(app, ["run"])
+
+    assert result.exit_code == 1
+    assert "lrefs" in result.output
+    assert not (tmp_path / "flow_conditions.json").exists()
+
+
+def test_run_direct_options_writes_json(tmp_path) -> None:
     """Direct inputs run the solver and write structured output."""
 
     output_path = tmp_path / "flow_state.json"
     result = runner.invoke(
         app,
         [
-            "solve",
+            "run",
             "--mach",
             "2",
             "--pres",
@@ -132,3 +146,63 @@ def test_recover_reports_insufficient_metadata(tmp_path) -> None:
 
     assert result.exit_code == 1
     assert "does not contain a complete flow-state input combination" in result.output
+
+
+# --------------------------------------------------
+# examples
+# --------------------------------------------------
+EXAMPLE_NAMES = sorted(list_examples())
+
+
+def test_examples_lists_every_example_with_a_description() -> None:
+    """Without a name, examples lists each example and its description."""
+
+    result = runner.invoke(app, ["examples"])
+
+    assert result.exit_code == 0
+    for name, description in list_examples().items():
+        assert description
+        assert name in result.output
+        assert description in result.output
+
+
+@pytest.mark.parametrize("name", EXAMPLE_NAMES)
+def test_every_example_copies_and_runs(tmp_path, monkeypatch, name: str) -> None:
+    """Each example lands in ./<name>/ and runs there with the default config name."""
+
+    monkeypatch.chdir(tmp_path)
+    copy_result = runner.invoke(app, ["examples", name])
+    assert copy_result.exit_code == 0
+
+    monkeypatch.chdir(tmp_path / name)
+    run_result = runner.invoke(app, ["run", "--quiet"])
+
+    assert run_result.exit_code == 0
+    assert (tmp_path / name / "flow_conditions.json").exists()
+
+
+def test_examples_refuses_an_existing_folder_unless_forced(tmp_path, monkeypatch) -> None:
+    """A second copy fails without --force and overwrites with it."""
+
+    monkeypatch.chdir(tmp_path)
+    name = EXAMPLE_NAMES[0]
+    runner.invoke(app, ["examples", name])
+
+    refused = runner.invoke(app, ["examples", name])
+    forced = runner.invoke(app, ["examples", name, "--force"])
+
+    assert refused.exit_code == 1
+    assert "already exists" in refused.output
+    assert forced.exit_code == 0
+
+
+def test_examples_rejects_an_unknown_name(tmp_path, monkeypatch) -> None:
+    """An unknown name fails and lists the available examples."""
+
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["examples", "nope"])
+
+    assert result.exit_code == 1
+    assert "unknown example" in result.output
+    assert EXAMPLE_NAMES[0] in result.output
+    assert not (tmp_path / "nope").exists()

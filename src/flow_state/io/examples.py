@@ -1,14 +1,14 @@
-"""Bundled example config files for the flow-state CLI.
+"""Bundled example cases for the flow-state CLI.
 
-Provides a registry mapping short names to TOML files stored as
-package data under flow_state/examples/. Applications can use this module
-to list available examples and read their contents.
+Each example is a folder under ``flow_state/examples/`` holding the files of
+one case (here a ``flow_config.toml``). The folder name is the example's name
+and the first text line of its config is the description, so the folders are
+the registry: adding an example means adding a folder.
 
 Adding a new example
 --------------------
-1. Add a TOML file to ``src/flow_state/examples/<name>.toml``.
-2. Add one entry to ``EXAMPLES_REGISTRY`` below.
-3. Add a symlink in ``examples/configs/`` pointing to the new file.
+1. Add ``src/flow_state/examples/<name>/flow_config.toml``.
+2. Start the file with a comment that names the case (shown in the listing).
 """
 
 # --------------------------------------------------
@@ -17,79 +17,97 @@ Adding a new example
 from __future__ import annotations
 
 from importlib.resources import files
+from importlib.resources.abc import Traversable
+from pathlib import Path
 
 # --------------------------------------------------
-# registry: short name -> (filename, one-line description)
-#
-# keep entries sorted alphabetically by key for clean list output
+# module constants
 # --------------------------------------------------
-EXAMPLES_REGISTRY: dict[str, tuple[str, str]] = {
-    "aedc_t9": (
-        "aedc_t9.toml",
-        "AEDC Tunnel 9 — Mach 9.86, nitrogen, freestream conditions",
-    ),
-    "bam6qt": (
-        "bam6qt.toml",
-        "BAM6QT Mach 6 Quiet Tunnel (Purdue) — Mach 6, air, stag conditions",
-    ),
-    "sandia": (
-        "sandia.toml",
-        "Sandia Hypersonic Wind Tunnel — Mach 5, air, stag conditions",
-    ),
-    "stort": (
-        "stort.toml",
-        "STORT flight — Mach 7.1, 33.2 km altitude",
-    ),
-}
+
+# config file every example holds (run's default config name)
+EXAMPLE_CONFIG = "flow_config.toml"
 
 
 # --------------------------------------------------
-# list_examples: return {name: description} for all registered examples
+# helpers
+# --------------------------------------------------
+def _examples_root() -> Traversable:
+    """Folder of the bundled examples inside the installed package."""
+    return files("flow_state") / "examples"
+
+
+def _description(config_text: str) -> str:
+    """First text line of a config's header comment (dividers skipped)."""
+
+    # walk the leading comment block
+    for line in config_text.splitlines():
+        stripped = line.strip()
+
+        # the header ends at the first line that isn't a comment
+        if stripped and not stripped.startswith("#"):
+            break
+
+        # skip blank comment lines and dividers like "# -----"
+        text = stripped.lstrip("#").strip()
+        if text and set(text) - set("-=#"):
+            return text
+
+    return ""
+
+
+# --------------------------------------------------
+# public API
 # --------------------------------------------------
 def list_examples() -> dict[str, str]:
-    """Return a name -> description mapping for all available examples.
+    """Return a name -> description mapping of the bundled examples.
 
     Returns:
-        Dict of {name: description} sorted alphabetically by name.
+        Dict of {name: description}, sorted by name.
     """
-    # build sorted dict for consistent display order
-    return {name: desc for name, (_, desc) in sorted(EXAMPLES_REGISTRY.items())}
+
+    # every folder with a config is an example
+    examples: dict[str, str] = {}
+    for folder in sorted(_examples_root().iterdir(), key=lambda item: item.name):
+        config = folder / EXAMPLE_CONFIG
+        if folder.is_dir() and config.is_file():
+            examples[folder.name] = _description(config.read_text(encoding="utf-8"))
+
+    return examples
 
 
-# --------------------------------------------------
-# get_example_text: return TOML text for a named example
-# --------------------------------------------------
-def get_example_text(name: str) -> str:
-    """Return the TOML text of a named example config.
+def copy_example(name: str, destination: str | Path, force: bool = False) -> list[Path]:
+    """Copy a bundled example's files into a folder.
 
     Args:
-        name: Short example name (e.g. "bam6qt"). Case-insensitive.
+        name: Example name (see list_examples).
+        destination: Folder to create and copy the files into.
+        force: Overwrite files that already exist in the folder.
 
     Returns:
-        TOML file contents as a string.
+        The paths of the written files.
 
     Raises:
-        KeyError: If ``name`` is not in the registry.
+        KeyError: If there is no example of that name.
+        FileExistsError: If the folder exists and force is False.
     """
-    # normalize name
-    key = name.lower()
 
-    # look up registry
-    if key not in EXAMPLES_REGISTRY:
-        raise KeyError(key)
+    # check: a known example
+    if name not in list_examples():
+        raise KeyError(name)
 
-    # read file from package data
-    filename, _ = EXAMPLES_REGISTRY[key]
-    return (files("flow_state") / "examples" / filename).read_text(encoding="utf-8")
+    # check: don't overwrite an earlier copy unless asked to
+    destination = Path(destination)
+    if destination.exists() and not force:
+        raise FileExistsError(f"{destination} already exists (use --force to overwrite)")
 
+    # copy every file of the example folder
+    destination.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    source = _examples_root() / name
+    for item in sorted(source.iterdir(), key=lambda entry: entry.name):
+        if item.is_file():
+            target = destination / item.name
+            target.write_bytes(item.read_bytes())
+            written.append(target)
 
-# --------------------------------------------------
-# available_example_names: convenience list for validation / help text
-# --------------------------------------------------
-def available_example_names() -> list[str]:
-    """Return sorted list of registered example names.
-
-    Returns:
-        Sorted list of names accepted by get_example_text().
-    """
-    return sorted(EXAMPLES_REGISTRY.keys())
+    return written

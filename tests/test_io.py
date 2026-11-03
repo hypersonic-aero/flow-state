@@ -194,6 +194,95 @@ notes = "Test case"
 
 
 # --------------------------------------------------
+# tests for config validation (FlowConfig)
+# --------------------------------------------------
+
+# shipped example configs and the template written by `flow-state init`
+EXAMPLES_DIR = Path(__file__).resolve().parents[1] / "src" / "flow_state" / "examples"
+EXAMPLE_CONFIGS = sorted(EXAMPLES_DIR.glob("*/flow_config.toml"))
+
+
+def _write_config(tmp_path: Path, text: str) -> Path:
+    """Write a config file into the test directory."""
+    path = tmp_path / "flow_config.toml"
+    path.write_text(text)
+    return path
+
+
+class TestConfigValidation:
+    """config errors fail at the input boundary, naming the key"""
+
+    @pytest.mark.parametrize(
+        ("config_text", "key", "message"),
+        [
+            # typo of an optional key: used to be ignored silently
+            ("mach = 6.0\npres = 600.0\ntemp = 50.0\nlrefs = 0.5\n", "lrefs", "Extra inputs"),
+            # typo of an input key
+            ('mach = 6.0\npres_stg = [140, "psi"]\ntemp_stag = 420\n', "pres_stg", "Extra inputs"),
+            # unknown unit
+            ('mach = 6.0\npres_stag = [140, "psii"]\ntemp_stag = 420\n', "pres_stag", "psii"),
+            # out-of-range values
+            ("mach = -6.0\npres = 600.0\ntemp = 50.0\n", "mach", "greater than 0"),
+            ('mach = 6.0\npres = 600.0\ntemp = [-300, "C"]\n', "temp", "absolute zero"),
+            # unknown gas
+            ('mach = 6.0\npres = 600.0\ntemp = 50.0\ngas = "argon"\n', "gas", "argon"),
+            # [atmosphere] table: range and unknown key
+            ("mach = 6.0\naltitude = 30000\n[atmosphere]\nmodel = \"cira86\"\nmonth = 13\n",
+             "atmosphere.month", "less than or equal to 12"),
+            ("mach = 6.0\naltitude = 30000\n[atmosphere]\nlatitud = 30\n",
+             "atmosphere.latitud", "Extra inputs"),
+            # the atmosphere given twice
+            ('mach = 6.0\naltitude = 30000\natm = "ussa76"\n[atmosphere]\nmodel = "cira86"\n',
+             "not both", "not both"),
+        ],
+    )
+    def test_invalid_config_names_the_key(
+        self, tmp_path: Path, config_text: str, key: str, message: str
+    ) -> None:
+        """each invalid config raises a ValueError with the key and the reason"""
+        path = _write_config(tmp_path, config_text)
+
+        with pytest.raises(ValueError) as error:
+            read_config(path)
+
+        assert key in str(error.value)
+        assert message in str(error.value)
+        assert "errors.pydantic.dev" not in str(error.value)
+
+    def test_atmosphere_table_builds_cira86(self, tmp_path: Path) -> None:
+        """an [atmosphere] table with options becomes a configured CIRA86 model"""
+        from flow_state.atmosphere import CIRA86
+
+        config_text = 'mach = 6.0\naltitude = 30000\n[atmosphere]\nmodel = "cira86"\nlatitude = 30.0\nmonth = 7\n'
+        path = _write_config(tmp_path, config_text)
+
+        kwargs = read_config(path)
+
+        assert isinstance(kwargs["atm"], CIRA86)
+        assert "atmosphere" not in kwargs
+
+    @pytest.mark.parametrize("example_path", EXAMPLE_CONFIGS, ids=lambda path: path.parent.name)
+    def test_shipped_examples_validate_and_solve(self, example_path: Path) -> None:
+        """every shipped example config validates and solves"""
+        kwargs = read_config(example_path)
+
+        state = solve(**kwargs)
+
+        assert state.mach > 0.0
+
+    def test_init_template_validates(self, tmp_path: Path) -> None:
+        """the template written by `flow-state init` validates and solves"""
+        from flow_state.cli.templates import CONFIG_TEMPLATE
+
+        path = _write_config(tmp_path, CONFIG_TEMPLATE)
+        kwargs = read_config(path)
+
+        state = solve(**kwargs)
+
+        assert state.mach > 0.0
+
+
+# --------------------------------------------------
 # tests for print_summary
 # --------------------------------------------------
 

@@ -1,9 +1,14 @@
 """Configuration templates emitted by flow-state CLI commands."""
 
+# --------------------------------------------------
+# configuration template
+# --------------------------------------------------
+
+# starter flow_config.toml written by `flow-state init`
 CONFIG_TEMPLATE = """\
 # flow_state configuration file
 # =============================
-# Edit the values below and run: flow-state solve
+# Edit the values below and run: flow-state run
 
 # Supported units:
 #   pressure    : Pa, psi, atm, bar, torr

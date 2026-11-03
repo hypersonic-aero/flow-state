@@ -1,23 +1,28 @@
 # --------------------------------------------------
-# BAM6QT — Boeing/AFOSR Mach 6 Quiet Tunnel (Purdue University)
+# AEDC Tunnel 9 (Arnold Engineering Development Complex)
 #
-# Run: flow-state solve --config flow_config.toml
+# Run: flow-state run --config flow_config.toml
 # --------------------------------------------------
 
 # --------------------------------------------------
 # given values
 # --------------------------------------------------
 
-# mach number [0]
-mach = 6.0
-# stagnation temperature [K]
-temp_stag = 420.0
+# mach number [-]
+mach = 9.86
+# freestream static temperature [K]
+temp = 53.4
 # unit reynolds number [1/m]
-re1 = 10.0e6
+re1 = 15.03e6
 # reference length scale [m]
 lref = 1.0
 
 # --------------------------------------------------
+# gas model
+# --------------------------------------------------
+gas = "n2"
+
+# --------------------------------------------------
 # label (optional)
 # --------------------------------------------------
-notes = "bam6qt nominal mach 6 run conditions"
+notes = "aedc tunnel 9 nominal mach 10 run conditions"

@@ -80,34 +80,43 @@ def copy_example(name: str, destination: str | Path, force: bool = False) -> lis
 
     Args:
         name: Example name (see list_examples).
-        destination: Folder to create and copy the files into.
-        force: Overwrite files that already exist in the folder.
+        destination: Folder to copy the files into (created if missing).
+        force: Overwrite files of the same name in the folder.
 
     Returns:
         The paths of the written files.
 
     Raises:
         KeyError: If there is no example of that name.
-        FileExistsError: If the folder exists and force is False.
+        FileExistsError: If a file of the example already exists there and force
+            is False (nothing is written then).
     """
 
     # check: a known example
     if name not in list_examples():
         raise KeyError(name)
 
-    # check: don't overwrite an earlier copy unless asked to
+    # the example's files
+    source = _examples_root() / name
+    items = sorted(
+        (entry for entry in source.iterdir() if entry.is_file()),
+        key=lambda entry: entry.name,
+    )
+
+    # check: don't overwrite the user's files unless asked to (before writing any)
     destination = Path(destination)
-    if destination.exists() and not force:
-        raise FileExistsError(f"{destination} already exists (use --force to overwrite)")
+    existing = [item.name for item in items if (destination / item.name).exists()]
+    if existing and not force:
+        raise FileExistsError(
+            f"would overwrite {', '.join(existing)} (use --force to overwrite)"
+        )
 
     # copy every file of the example folder
     destination.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
-    source = _examples_root() / name
-    for item in sorted(source.iterdir(), key=lambda entry: entry.name):
-        if item.is_file():
-            target = destination / item.name
-            target.write_bytes(item.read_bytes())
-            written.append(target)
+    for item in items:
+        target = destination / item.name
+        target.write_bytes(item.read_bytes())
+        written.append(target)
 
     return written

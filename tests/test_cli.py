@@ -168,21 +168,20 @@ def test_examples_lists_every_example_with_a_description() -> None:
 
 @pytest.mark.parametrize("name", EXAMPLE_NAMES)
 def test_every_example_copies_and_runs(tmp_path, monkeypatch, name: str) -> None:
-    """Each example lands in ./<name>/ and runs there with the default config name."""
+    """Each example lands in the current folder and runs there with the default config."""
 
     monkeypatch.chdir(tmp_path)
     copy_result = runner.invoke(app, ["examples", name])
     assert copy_result.exit_code == 0
 
-    monkeypatch.chdir(tmp_path / name)
     run_result = runner.invoke(app, ["run", "--quiet"])
 
     assert run_result.exit_code == 0
-    assert (tmp_path / name / "flow_conditions.json").exists()
+    assert (tmp_path / "flow_conditions.json").exists()
 
 
-def test_examples_refuses_an_existing_folder_unless_forced(tmp_path, monkeypatch) -> None:
-    """A second copy fails without --force and overwrites with it."""
+def test_examples_refuses_to_overwrite_files_unless_forced(tmp_path, monkeypatch) -> None:
+    """A second copy fails without --force (the files exist) and overwrites with it."""
 
     monkeypatch.chdir(tmp_path)
     name = EXAMPLE_NAMES[0]
@@ -192,7 +191,7 @@ def test_examples_refuses_an_existing_folder_unless_forced(tmp_path, monkeypatch
     forced = runner.invoke(app, ["examples", name, "--force"])
 
     assert refused.exit_code == 1
-    assert "already exists" in refused.output
+    assert "would overwrite" in refused.output
     assert forced.exit_code == 0
 
 
@@ -205,4 +204,4 @@ def test_examples_rejects_an_unknown_name(tmp_path, monkeypatch) -> None:
     assert result.exit_code == 1
     assert "unknown example" in result.output
     assert EXAMPLE_NAMES[0] in result.output
-    assert not (tmp_path / "nope").exists()
+    assert list(tmp_path.iterdir()) == []

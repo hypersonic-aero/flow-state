@@ -11,32 +11,23 @@ import typer
 
 from flow_state import __version__
 
-# --------------------------------------------------
-# module constants
-# --------------------------------------------------
-
-# loggers that --verbose switches to debug: this tool and the uahypersonics
-# packages it calls
-DEBUG_LOGGERS = ("flow_state",)
-
 
 # --------------------------------------------------
 # verbose callback
 # --------------------------------------------------
 def verbose_callback(value: bool) -> None:
-    """Configure console logging; --verbose adds debug output from our own packages.
+    """Configure console logging; --verbose adds debug output from this tool.
 
-    Third-party libraries stay at the default level, so --verbose shows our
-    debug messages without theirs.
+    Other packages, ours and third-party, stay at the default level, so
+    --verbose shows this tool's debug messages only.
     """
 
     # default console logging for every logger
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s %(message)s")
 
-    # debug output from this tool and the uahypersonics packages it calls
+    # debug output from this tool only; the packages it calls keep their levels
     if value:
-        for logger_name in DEBUG_LOGGERS:
-            logging.getLogger(logger_name).setLevel(logging.DEBUG)
+        logging.getLogger("flow_state").setLevel(logging.DEBUG)
 
 
 # --------------------------------------------------

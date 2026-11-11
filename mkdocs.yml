@@ -4,15 +4,15 @@
 # site metadata
 # --------------------------------------------------
 site_name: flow_state
-site_url: https://uahypersonics.github.io/flow-state
+site_url: https://hypersonic-aero.github.io/flow-state
 site_author: Christoph Hader
 site_description: Utility for calculating flow states (e.g., temperature, pressure, density) in Python.
 
 # --------------------------------------------------
 # github repository (adds link in top right corner)
 # --------------------------------------------------
-repo_name: uahypersonics/flow-state
-repo_url: https://github.com/uahypersonics/flow-state
+repo_name: hypersonic-aero/flow-state
+repo_url: https://github.com/hypersonic-aero/flow-state
 edit_uri: edit/main/docs/
 
 # --------------------------------------------------

@@ -2,11 +2,11 @@
 
 Compressible flow state calculations for Python.
 
-[![Test](https://github.com/uahypersonics/flow-state/actions/workflows/test.yml/badge.svg)](https://github.com/uahypersonics/flow-state/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/uahypersonics/flow-state/branch/main/graph/badge.svg)](https://codecov.io/gh/uahypersonics/flow-state)
+[![Test](https://github.com/hypersonic-aero/flow-state/actions/workflows/test.yml/badge.svg)](https://github.com/hypersonic-aero/flow-state/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/hypersonic-aero/flow-state/branch/main/graph/badge.svg)](https://codecov.io/gh/hypersonic-aero/flow-state)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18926470.svg)](https://doi.org/10.5281/zenodo.18926470)
 [![PyPI](https://img.shields.io/pypi/v/flowstate)](https://pypi.org/project/flowstate/)
-[![Docs](https://img.shields.io/badge/docs-zensical-blue)](https://uahypersonics.github.io/flow-state/)
+[![Docs](https://img.shields.io/badge/docs-zensical-blue)](https://hypersonic-aero.github.io/flow-state/)
 [![Webapp](https://img.shields.io/badge/webapp-streamlit-red)](https://flow-state-calculator.streamlit.app/)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-≥3.11-blue.svg)](https://www.python.org/downloads/)
@@ -46,12 +46,12 @@ flow-state solve   # Solve from flow_config.toml
 flow-state recover base_flow.hdf5  # Recover flow_conditions.json from HDF5 metadata
 ```
 
-- API Usage: https://uahypersonics.github.io/flow-state/user_guide/api_usage/
-- CLI Usage: https://uahypersonics.github.io/flow-state/user_guide/cli_usage/
+- API Usage: https://hypersonic-aero.github.io/flow-state/user_guide/api_usage/
+- CLI Usage: https://hypersonic-aero.github.io/flow-state/user_guide/cli_usage/
 
 ## Documentation
 
-Full documentation: https://uahypersonics.github.io/flow-state
+Full documentation: https://hypersonic-aero.github.io/flow-state
 
 ## Citation
 
@@ -61,7 +61,7 @@ If you use `flow_state` in your research, please cite it:
 @software{flow_state,
   author = {Hader, Christoph},
   title = {flow\_state: Compressible Flow State Calculations},
-  url = {https://github.com/uahypersonics/flow-state},
+  url = {https://github.com/hypersonic-aero/flow-state},
   year = {2026}
 }
 ```

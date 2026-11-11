@@ -15,7 +15,7 @@ pip install flowstate
 Clone the repository and install in editable mode:
 
 ```bash
-git clone https://github.com/uahypersonics/flow-state.git
+git clone https://github.com/hypersonic-aero/flow-state.git
 cd flow-state
 pip install -e .
 ```

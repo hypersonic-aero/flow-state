@@ -38,5 +38,5 @@ Specify the known quantities (Mach, altitude, Re, etc.), `flow_state` computes t
 ## License
 
 GNU General Public License v3.0 or later. See
-[LICENSE](https://github.com/uahypersonics/flow-state/blob/main/LICENSE) for the
+[LICENSE](https://github.com/hypersonic-aero/flow-state/blob/main/LICENSE) for the
 complete license terms.

@@ -46,9 +46,9 @@ dev = [
 flow-state = "flow_state.cli.app:app"
 
 [project.urls]
-Homepage = "https://github.com/uahypersonics/flow-state"
-Repository = "https://github.com/uahypersonics/flow-state"
-Documentation = "https://uahypersonics.github.io/flow-state"
+Homepage = "https://github.com/hypersonic-aero/flow-state"
+Repository = "https://github.com/hypersonic-aero/flow-state"
+Documentation = "https://hypersonic-aero.github.io/flow-state"
 
 [tool.setuptools.packages.find]
 where = ["src"]

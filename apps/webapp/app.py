@@ -345,8 +345,8 @@ def main() -> None:
         """
         <div style='text-align: center; color: gray; font-size: 0.8em;'>
         flow_state by UAH Hypersonics<br>
-        <a href="https://github.com/uahypersonics/flow-state" target="_blank">GitHub</a> |
-        <a href="https://uahypersonics.github.io/flow-state" target="_blank">Documentation</a>
+        <a href="https://github.com/hypersonic-aero/flow-state" target="_blank">GitHub</a> |
+        <a href="https://hypersonic-aero.github.io/flow-state" target="_blank">Documentation</a>
         </div>
         """,
         unsafe_allow_html=True,

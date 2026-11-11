@@ -7,8 +7,8 @@ authors:
   - family-names: "Hader"
     given-names: "Christoph"
     orcid: "https://orcid.org/0000-0002-0956-000X"
-repository-code: "https://github.com/uahypersonics/flow-state"
-url: "https://uahypersonics.github.io/flow-state"
+repository-code: "https://github.com/hypersonic-aero/flow-state"
+url: "https://hypersonic-aero.github.io/flow-state"
 doi: "10.5281/zenodo.18926470"
 license: GPL-3.0-or-later
 keywords:
